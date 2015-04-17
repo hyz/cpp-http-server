@@ -15,6 +15,7 @@ using Message::Response;
 
 typedef Message::Table<
     ___reserved___
+  , Message::Pair< Request<int>, Response<int> >
   , Message::Pair< Request<std::string>, Response<std::string> >
   , Message::Pair< Request<int, std::string>, Response<int, std::string> >
   , Message::Pair< Request<std::map<int,std::string>>, Response<std::map<int,std::string>> >
@@ -22,9 +23,9 @@ typedef Message::Table<
 
 struct Message_handle : service_def<Message_handle,Message_table> //::: server-side
 {
-    /// handle all Msg_echo message
+    /// handle all reuests
     template <typename Reply, typename...T>
-    void operator()(Reply reply, Msg_echo, T&& ...t) const
+    void operator()(Reply reply, T&& ...t) const
     {
         reply(std::forward<T>(t)...);
     }
@@ -91,8 +92,10 @@ static void echo_test(ip::address host, unsigned short port, int n_req, Data&& d
     int n_rsp = 0; {
         boost::timer::auto_cpu_timer t;
         for (int i=0; i < n_req; ++i) {
-            cli.async_do([&n_rsp,&data](Data const& u) { ENSURE(u==data); ++n_rsp; }
-                    , data);
+            cli.async_do(
+                    [&n_rsp,&data](Data const& u) { ENSURE(u==data); ++n_rsp; }
+                    , data
+                    );
         }
         io_s.run();
     }
